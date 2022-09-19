@@ -45,10 +45,15 @@ function checkValue(string, key) {
 // body is any form data
 // query is url query params. Ex /urls/1?text=now
 app.post("/urls", (req, res) => {
+  const cookieId = req.cookies["user_id"]
+  const user = users[cookieId]
   const key = generateRandomString();
-  urlDatabase[key] = req.body.longURL;
-  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
-  res.redirect(`/urls/${key}`);
+  if (!user) {
+    res.send("<html><body>User does not have premission to create url till they are logged in</body></html>\n")
+  } else {
+    urlDatabase[key] = req.body.longURL;
+    res.redirect(`/urls/${key}`);
+  }
 });
 
 app.post('/urls/:id/delete', (req, res) => {
@@ -111,6 +116,9 @@ app.get('/login', (req, res) => {
     urls: urlDatabase,
     user: user
   };
+  if (user) {
+    res.redirect('/urls')
+  }
   res.render('urls_login', templateVars)
 });
 
@@ -121,12 +129,19 @@ app.get('/register', (req, res) => {
     urls: urlDatabase,
     user: user
   };
+  if (user) {
+    res.redirect('/urls')
+  }
   res.render('urls_register', templateVars)
 })
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id] 
-  res.redirect(longURL);
+  if (!urlDatabase[req.params.id]){
+    res.send("<html><body>Id does not exist</body></html>\n")
+  } else {
+    res.redirect(longURL);
+  }
 });
 
 app.get("/", (req, res) => {
@@ -162,6 +177,9 @@ app.get("/urls/new", (req, res) => {
   const templateVars = { 
     user: user,
   };
+  if (!user) {
+    res.redirect('/login')
+  }
   res.render("urls_new", templateVars);
 });
 
@@ -174,6 +192,9 @@ app.get("/urls/:id", (req, res) => {
     longURL: urlDatabase[id],
     user: user
   };
+  if (!id) {
+
+  }
   res.render("urls_show", templateVars);
 });
 
