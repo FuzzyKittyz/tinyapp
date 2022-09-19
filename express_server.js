@@ -29,16 +29,15 @@ function generateRandomString() {
   return result;
 }
 
-function checkEmail(string) {
+function checkValue(string, key) {
   for (let user in users) {
-    let email = users[user];
-    console.log(email['email'])
-    console.log(string)
-    if (string === email['email']){
-      return true
+    let value = users[user];
+    if (string === value[key]){
+      console.log(user)
+      return user 
     };
   };
-  return false
+  return null
 };
 
 // req -- params, body, query, headers
@@ -63,18 +62,28 @@ app.post('/urls/:id/edit', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username)
+  if (!checkValue(req.body.email, 'email')) {
+    res.status(403).send('Email Cannot be Found')
+  }
+
+  if (!checkValue(req.body.password, 'password')) {
+    res.status(403).send('Password does not match')
+  }
+
+  if (checkValue(req.body.email, 'email') && checkValue(req.body.password, 'password')) {
+    res.cookie('user_id', checkValue(req.body.email, 'email'))
+  }
   res.redirect('/urls')
 });
 
 app.post('/logout', (req, res) => {
-  delete users[req.cookies["user_id"]]
+  res.clearCookie('user_id')
   res.redirect('/urls')
 });
 
 app.post('/register', (req, res) => {
-  if (checkEmail(req.body.email)) {
-    res.status(404).send('Email already in use')
+  if (checkValue(req.body.email, 'email')) {
+    res.status(403).send('Email already in use')
   }
   const cookieId = req.cookies["user_id"]
   const key = generateRandomString();
@@ -84,13 +93,14 @@ app.post('/register', (req, res) => {
     password: req.body.password,
   }
   if (req.body.email === '') {
-    res.status(404).send('Eror 404: No email submitted')
+    res.status(403).send('Eror 404: No email submitted')
   };
   if (req.body.password === '') {
-    res.status(404).send('Eror 404: No password submitted')
+    res.status(403).send('Eror 404: No password submitted')
   }
   
   res.cookie('user_id', key)
+  console.log(users)
   res.redirect('/urls')
 });
 
