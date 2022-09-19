@@ -94,6 +94,16 @@ app.post('/register', (req, res) => {
   res.redirect('/urls')
 });
 
+app.get('/login', (req, res) => {
+  const cookieId = req.cookies["user_id"]
+  const user = users[cookieId]
+  templateVars = {
+    urls: urlDatabase,
+    user: user
+  };
+  res.render('urls_login', templateVars)
+});
+
 app.get('/register', (req, res) => {
   const cookieId = req.cookies["user_id"]
   const user = users[cookieId]
@@ -101,7 +111,6 @@ app.get('/register', (req, res) => {
     urls: urlDatabase,
     user: user
   };
-  console.log(users)
   res.render('urls_register', templateVars)
 })
 
