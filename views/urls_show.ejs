@@ -16,13 +16,32 @@
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+        <h5 class="card-title">TinyURL for: <%= urls[id].longURL %></h5>
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
       </div>
+      <div class='card-footer text-muted'><h3> Edit</h3>
+        <form class='form-inline' action="/urls/<%= id %>/edit" method="POST">
+          <div class='form-group mb-2' align="center">
+            <label for="longURL" >Enter a URL</label>
+            <input
+              align="center"
+              class="form-control"
+              type="text"
+              name="longURL"
+              placeholder="http://"
+              style="width: 300px; margin: lem"
+              />
+              <form method="POST" class="btn btn-primary">
+                <button type="submit">Submit</button>
+              </form>
+          </div>
+        </form>
+      </div>
       <div class="card-footer text-muted"></div>
     </div>
+
     <!-- Bootstrap JS -->
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

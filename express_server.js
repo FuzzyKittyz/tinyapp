@@ -10,8 +10,7 @@ app.use(cookieParser())
 app.use(express.urlencoded({ extended: true }));
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+
 };
 
 const users = {
@@ -40,6 +39,17 @@ function checkValue(string, key) {
   return null
 };
 
+const urlsForUser = function(id) {
+  let accObj = {
+  }
+  for (let url in urlDatabase){
+    if (id === urlDatabase[url].userID){
+        accObj[urlDatabase[url].key] = urlDatabase[url]
+    }
+  }
+  return accObj;
+};
+
 // req -- params, body, query, headers
 // /url/:id. /urls/1  -----params
 // body is any form data
@@ -51,7 +61,11 @@ app.post("/urls", (req, res) => {
   if (!user) {
     res.send("<html><body>User does not have premission to create url till they are logged in</body></html>\n")
   } else {
-    urlDatabase[key] = req.body.longURL;
+    urlDatabase[key] = {
+      longURL: req.body.longURL,
+      userID: cookieId,
+      key: key
+    }
     res.redirect(`/urls/${key}`);
   }
 });
@@ -97,15 +111,8 @@ app.post('/register', (req, res) => {
     email: req.body.email,
     password: req.body.password,
   }
-  if (req.body.email === '') {
-    res.status(403).send('Eror 404: No email submitted')
-  };
-  if (req.body.password === '') {
-    res.status(403).send('Eror 404: No password submitted')
-  }
   
   res.cookie('user_id', key)
-  console.log(users)
   res.redirect('/urls')
 });
 
@@ -136,7 +143,12 @@ app.get('/register', (req, res) => {
 })
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id] 
+  const cookieId = req.cookies["user_id"]
+  const user = users[cookieId]
+  const longURL = urlDatabase[req.params.id].longURL
+  if (!user) {
+    res.send("<html><body>User is not logged in</body></html>\n")
+  };
   if (!urlDatabase[req.params.id]){
     res.send("<html><body>Id does not exist</body></html>\n")
   } else {
@@ -163,9 +175,8 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   const cookieId = req.cookies["user_id"]
   const user = users[cookieId]
-  
   const templateVars = { 
-    urls: urlDatabase,
+    url: urlsForUser(req.cookies["user_id"]),
     user: user,
   };
   res.render("urls_index", templateVars);
@@ -189,12 +200,9 @@ app.get("/urls/:id", (req, res) => {
   const user = users[cookieId]
   const templateVars = { 
     id, 
-    longURL: urlDatabase[id],
+    urls: urlDatabase,
     user: user
   };
-  if (!id) {
-
-  }
   res.render("urls_show", templateVars);
 });
 
