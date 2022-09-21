@@ -1,11 +1,17 @@
 const express = require("express");
 const app = express();
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
+const bcrypt = require("bcryptjs");
 const e = require("express");
+const { has } = require("lodash");
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
-app.use(cookieParser())
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1'],
+
+}))
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -16,7 +22,6 @@ const urlDatabase = {
 const users = {
 
 };
-
 
 function generateRandomString() {
   let result           = '';
@@ -32,8 +37,7 @@ function checkValue(string, key) {
   for (let user in users) {
     let value = users[user];
     if (string === value[key]){
-      console.log(user)
-      return user 
+      return users[user]
     };
   };
   return null
@@ -55,7 +59,7 @@ const urlsForUser = function(id) {
 // body is any form data
 // query is url query params. Ex /urls/1?text=now
 app.post("/urls", (req, res) => {
-  const cookieId = req.cookies["user_id"]
+  const cookieId = req.session.user_id
   const user = users[cookieId]
   const key = generateRandomString();
   if (!user) {
@@ -81,22 +85,24 @@ app.post('/urls/:id/edit', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
+  const email = req.body.email
+  const user = checkValue(email, 'email')
   if (!checkValue(req.body.email, 'email')) {
     res.status(403).send('Email Cannot be Found')
   }
 
-  if (!checkValue(req.body.password, 'password')) {
+  if (!bcrypt.compareSync(req.body.password, user.password)) {
     res.status(403).send('Password does not match')
   }
 
-  if (checkValue(req.body.email, 'email') && checkValue(req.body.password, 'password')) {
-    res.cookie('user_id', checkValue(req.body.email, 'email'))
+  if (checkValue(req.body.email, 'email') && bcrypt.compareSync(req.body.password, user.password)) {
+    req.session.user_id = user.id
   }
   res.redirect('/urls')
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id')
+  req.session = null
   res.redirect('/urls')
 });
 
@@ -104,20 +110,22 @@ app.post('/register', (req, res) => {
   if (checkValue(req.body.email, 'email')) {
     res.status(403).send('Email already in use')
   }
-  const cookieId = req.cookies["user_id"]
+
   const key = generateRandomString();
+  const password = req.body.password
+  const hashedPassword = bcrypt.hashSync(password, 10);
   users[key] = {
     id: key,
     email: req.body.email,
-    password: req.body.password,
+    password: hashedPassword
   }
-  
-  res.cookie('user_id', key)
+  console.log(users)
+  req.session.user_id = key;
   res.redirect('/urls')
 });
 
 app.get('/login', (req, res) => {
-  const cookieId = req.cookies["user_id"]
+  const cookieId = req.session.user_id
   const user = users[cookieId]
   templateVars = {
     urls: urlDatabase,
@@ -130,7 +138,7 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  const cookieId = req.cookies["user_id"]
+  const cookieId = req.session.user_id;
   const user = users[cookieId]
   const templateVars = { 
     urls: urlDatabase,
@@ -143,7 +151,7 @@ app.get('/register', (req, res) => {
 })
 
 app.get("/u/:id", (req, res) => {
-  const cookieId = req.cookies["user_id"]
+  const cookieId = req.session.user_id;
   const user = users[cookieId]
   const longURL = urlDatabase[req.params.id].longURL
   if (!user) {
@@ -173,17 +181,17 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const cookieId = req.cookies["user_id"]
+  const cookieId = req.session.user_id
   const user = users[cookieId]
   const templateVars = { 
-    url: urlsForUser(req.cookies["user_id"]),
+    url: urlsForUser(cookieId),
     user: user,
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const cookieId = req.cookies["user_id"]
+  const cookieId = req.session.user_id;
   const user = users[cookieId]
   const templateVars = { 
     user: user,
@@ -196,7 +204,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   const { id } = req.params; // object destructuring  -->> const id = req.params.id
-  const cookieId = req.cookies["user_id"]
+  const cookieId = req.session.user_id;
   const user = users[cookieId]
   const templateVars = { 
     id, 
