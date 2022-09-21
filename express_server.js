@@ -155,7 +155,16 @@ app.get("/u/:id", (req, res) => {
 });// what is sent to the user when they acccess a urls page
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const cookieId = req.session.user_id;
+  const user = users[cookieId];
+  
+  if(user) {
+    res.redirect('/urls')
+  };
+
+  if(!user) {
+    res.redirect('/login')
+  }
 });// accessing just localhost:8080/
 
 app.listen(PORT, () => {
@@ -202,4 +211,4 @@ app.get("/urls/:id", (req, res) => {
     user: user
   };
   res.render("urls_show", templateVars);
-});// sent to the user when accessing a url 
+});// sent to the user when accessing a url h
