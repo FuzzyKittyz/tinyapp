@@ -3,7 +3,8 @@ const app = express();
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const e = require("express");
-const { has } = require("lodash");
+const checkValue = require('./helpers')
+
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
@@ -33,15 +34,6 @@ function generateRandomString() {
   return result;
 }
 
-function checkValue(string, key) {
-  for (let user in users) {
-    let value = users[user];
-    if (string === value[key]){
-      return users[user]
-    };
-  };
-  return null
-};
 
 const urlsForUser = function(id) {
   let accObj = {
@@ -86,8 +78,8 @@ app.post('/urls/:id/edit', (req, res) => {
 
 app.post('/login', (req, res) => {
   const email = req.body.email
-  const user = checkValue(email, 'email')
-  if (!checkValue(req.body.email, 'email')) {
+  const user = checkValue(email, 'email', users)
+  if (!checkValue(req.body.email, 'email', users)) {
     res.status(403).send('Email Cannot be Found')
   }
 
@@ -95,7 +87,7 @@ app.post('/login', (req, res) => {
     res.status(403).send('Password does not match')
   }
 
-  if (checkValue(req.body.email, 'email') && bcrypt.compareSync(req.body.password, user.password)) {
+  if (checkValue(req.body.email, 'email', users) && bcrypt.compareSync(req.body.password, user.password)) {
     req.session.user_id = user.id
   }
   res.redirect('/urls')
@@ -107,7 +99,7 @@ app.post('/logout', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-  if (checkValue(req.body.email, 'email')) {
+  if (checkValue(req.body.email, 'email', users)) {
     res.status(403).send('Email already in use')
   }
 
