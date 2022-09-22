@@ -71,7 +71,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });// handles the delete button for urls
 
 app.post('/urls/:id/edit', (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;//changes the longurl of that url in the database
+  urlDatabase[req.params.id].longURL = req.body.longURL;//changes the longurl of that url in the database
   res.redirect('/urls');
 });// handles edit button for urls
 
@@ -189,8 +189,8 @@ app.get("/urls", (req, res) => {
   const cookieId = req.session.user_id;
   const user = users[cookieId];
   const templateVars = {
-    url: urlsForUser(cookieId),
     user: user,
+    url: urlsForUser(cookieId)
   };
   res.render("urls_index", templateVars);
 });// sent to the user when they access /urls
