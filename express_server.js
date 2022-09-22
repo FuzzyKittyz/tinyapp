@@ -50,13 +50,13 @@ const urlsForUser = function(id) {
 // body is any form data
 // query is url query params. Ex /urls/1?text=now
 app.post("/urls", (req, res) => {
-  const cookieId = req.session.user_id;
+  const cookieId = req.session.user_id;// sets cookie
   const user = users[cookieId];
-  const key = generateRandomString();
-  if (!user) {
+  const key = generateRandomString();//sets key to 6 char string
+  if (!user) {//checks to see if user is logged in
     res.send("<html><body>User does not have premission to create url till they are logged in</body></html>\n");
   } else {
-    urlDatabase[key] = {
+    urlDatabase[key] = {//adds the url to the database 
       longURL: req.body.longURL,
       userID: cookieId,
       key: key,
@@ -66,94 +66,94 @@ app.post("/urls", (req, res) => {
 });// handles post requests on '/urls'
 
 app.post('/urls/:id/delete', (req, res) => {
-  delete urlDatabase[req.params.id];
+  delete urlDatabase[req.params.id];//deletes that url 
   res.redirect("/urls");
 });// handles the delete button for urls
 
 app.post('/urls/:id/edit', (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+  urlDatabase[req.params.id] = req.body.longURL;//changes the longurl of that url in the database
   res.redirect('/urls');
 });// handles edit button for urls
 
 app.post('/login', (req, res) => {
-  const email = req.body.email;
-  const user = checkValue(email, 'email', users);
-  if (!checkValue(req.body.email, 'email', users)) {
+  const email = req.body.email;// sets an email var to what you type as your email
+  const user = checkValue(email, 'email', users); //sets user to the user youre trying to access using check value
+  if (!checkValue(req.body.email, 'email', users)) {//checks to see if the email exists in the database
     res.status(403).send('Email Cannot be Found');
   }
 
-  if (!bcrypt.compareSync(req.body.password, user.password)) {
+  if (!bcrypt.compareSync(req.body.password, user.password)) {//checks to see if the password matches the user
     res.status(403).send('Password does not match');
   }
 
   if (checkValue(req.body.email, 'email', users) && bcrypt.compareSync(req.body.password, user.password)) {
-    req.session.user_id = user.id;
+    req.session.user_id = user.id;// if all checks are good then ir logs you in 
   }
   res.redirect('/urls');
 });// handles the login button and all edge cases when trying to log in
 
 app.post('/logout', (req, res) => {
-  req.session = null;
+  req.session = null;//resets cookie to nothing 
   res.redirect('/urls');
 });//handles logging out 
 
 app.post('/register', (req, res) => {
-  if (req.body.email === '') {
+  if (req.body.email === '') {//checks to see if email bar is empty 
     res.status(403).send('Email field empty')
   }
-  if (req.body.password === '') {
+  if (req.body.password === '') {//checks to see if password bar is empty 
     res.status(403).send('Password field empty')
   }
-  if (checkValue(req.body.email, 'email', users)) {
+  if (checkValue(req.body.email, 'email', users)) {//checks to see if email is already in the user database
     res.status(403).send('Email already in use');
   }
 
-  const key = generateRandomString();
+  const key = generateRandomString();//sets the user key to a random 6 char string 
   const password = req.body.password;
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  users[key] = {
+  const hashedPassword = bcrypt.hashSync(password, 10);//hashes the password you give
+  users[key] = {// adds the user to the users obj 
     id: key,
     email: req.body.email,
     password: hashedPassword
   };
-  req.session.user_id = key;
+  req.session.user_id = key;//sets the cookie to the 6 char string 
   res.redirect('/urls');
 });// handles edge cases and register button in /register
 
 app.get('/login', (req, res) => {
-  const cookieId = req.session.user_id;
+  const cookieId = req.session.user_id;// sets cookie 
   const user = users[cookieId];
   const templateVars = {
-    urls: urlDatabase,
-    user: user
+    urls: urlDatabase,//adds urls to the template for html to use
+    user: user//adds users 
   };
-  if (user) {
-    res.redirect('/urls');
+  if (user) {//checks to see if user is logged in 
+    res.redirect('/urls');// if they are then they are redirected to /urls instead 
   }
   res.render('urls_login', templateVars);
 });
 
 app.get('/register', (req, res) => {
-  const cookieId = req.session.user_id;
+  const cookieId = req.session.user_id;//sets cookie id
   const user = users[cookieId];
-  const templateVars = {
+  const templateVars = { //sets template vars
     urls: urlDatabase,
     user: user
   };
   if (user) {
-    res.redirect('/urls');
+    res.redirect('/urls');// if user is logged in redirect to /urls
   }
   res.render('urls_register', templateVars);
 });// what is sent to the user when they access the /login page
 
 app.get("/u/:id", (req, res) => {
-  const cookieId = req.session.user_id;
+  const cookieId = req.session.user_id;//set cookie id 
   const user = users[cookieId];
   const longURL = urlDatabase[req.params.id].longURL;
-  if (!user) {
+  if (!user) {//checks to see if user is not logged in 
     res.send("<html><body>User is not logged in</body></html>\n");
   }
-  if (!urlDatabase[req.params.id]) {
+  if (!urlDatabase[req.params.id]) {//checks to see if id is in the url database 
     res.send("<html><body>Id does not exist</body></html>\n");
   } else {
     res.redirect(longURL);
@@ -164,11 +164,11 @@ app.get("/", (req, res) => {
   const cookieId = req.session.user_id;
   const user = users[cookieId];
 
-  if(user) {
+  if(user) {//redirects to urls
     res.redirect('/urls')
   };
 
-  if(!user) {
+  if(!user) {//makes them log in 
     res.redirect('/login')
   }
 });// accessing just localhost:8080/
@@ -201,7 +201,7 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: user,
   };
-  if (!user) {
+  if (!user) {//if user is not logged in they must log in first 
     res.redirect('/login');
   }
   res.render("urls_new", templateVars);
@@ -216,7 +216,7 @@ app.get("/urls/:id", (req, res) => {
     urls: urlDatabase,
     user: user
   };
-  if (!checkValue(cookieId, 'userID', urlDatabase)) {
+  if (!checkValue(cookieId, 'userID', urlDatabase)) {//checks to see if the users cookie id matches the url otherwise they do not own the url and can not alter it 
     res.send("<html><body>User does not have premission to view this url</body></html>\n")
   }
   res.render("urls_show", templateVars);
