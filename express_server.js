@@ -157,7 +157,7 @@ app.get("/u/:id", (req, res) => {
 app.get("/", (req, res) => {
   const cookieId = req.session.user_id;
   const user = users[cookieId];
-  
+
   if(user) {
     res.redirect('/urls')
   };
@@ -210,5 +210,8 @@ app.get("/urls/:id", (req, res) => {
     urls: urlDatabase,
     user: user
   };
+  if (!user) {
+    res.send("<html><body>User does not have premission to view this url</body></html>\n")
+  }
   res.render("urls_show", templateVars);
 });// sent to the user when accessing a url h
