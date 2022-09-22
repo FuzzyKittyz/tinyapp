@@ -98,6 +98,12 @@ app.post('/logout', (req, res) => {
 });//handles logging out 
 
 app.post('/register', (req, res) => {
+  if (req.body.email === '') {
+    res.status(403).send('Email field empty')
+  }
+  if (req.body.password === '') {
+    res.status(403).send('Password field empty')
+  }
   if (checkValue(req.body.email, 'email', users)) {
     res.status(403).send('Email already in use');
   }
