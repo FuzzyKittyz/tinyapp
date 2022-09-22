@@ -210,7 +210,7 @@ app.get("/urls/:id", (req, res) => {
     urls: urlDatabase,
     user: user
   };
-  if (!user) {
+  if (!checkValue(cookieId, 'userID', urlDatabase)) {
     res.send("<html><body>User does not have premission to view this url</body></html>\n")
   }
   res.render("urls_show", templateVars);
